@@ -1,0 +1,217 @@
+{% extends 'network/layout.html' %}
+
+{% block script %}
+    <script>
+        let followed = false;
+        let page_num = 0;
+        document.addEventListener('DOMContentLoaded', () => {
+            let page = 1;
+            document.querySelector('#page_num').value = page;
+            get_folllow_num("follower");
+            get_folllow_num("followed");
+            max_pagenum("{{ name }}");
+            post_display(page);
+            {% if user.is_authenticated and user.username != name %}
+                get_followed_or_not();
+                document.querySelector('#follow').onclick = () => {
+                    let name = "{{ name }}";
+                    let command = "follow";
+                    if (followed === true) {
+                        command = "unfollow";
+                    }
+                    fetch('/become_followed', {
+                        method: "POST",
+                        body: JSON.stringify({
+                            name: name,
+                            command: command,
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        console.log(result);
+                        get_followed_or_not();
+                        get_folllow_num("follower");
+                        get_folllow_num("followed");
+                    });
+                }
+            {% endif %}
+            document.querySelector('#previous').onclick = () => {
+                if (page > 1) {
+                    page -= 1;
+                    post_display(page)
+                    document.querySelector('#page_num').value = page;
+                }
+            }
+            document.querySelector('#next').onclick = () => {
+                if (page < page_num) {
+                    page += 1;
+                    post_display(page);
+                    document.querySelector('#page_num').value = page;
+                }
+            }
+        })
+
+        function get_folllow_num(target) {
+            let name = "{{ name }}";
+            console.log(target);
+            fetch('/get_follow', {
+                method: "POST",
+                body: JSON.stringify({
+                    user: name,
+                    type: `${target}`
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log(result);
+                if (target == "follower") {
+                    document.querySelector('#follower_num').innerHTML = `<b>Follower:</b>${result["follower"]}`;
+                }
+                else {
+                    document.querySelector('#followed_num').innerHTML = `<b>Followed:</b>${result["followed"]}`;
+                }
+            })
+        }
+
+        function get_followed_or_not() {
+            let name = '{{ name }}';
+            fetch('/has_followed', {
+                method: "POST",
+                body: JSON.stringify({
+                    name: name
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log(result);
+                if (result["error"] !== undefined) {
+                    alert(result["error"]);
+                    return;
+                }
+                if (result["followed"] == 'y') {
+                    followed = true;
+                }
+                else if (result["followed"] == 'n') {
+                    followed = false;
+                }
+                if (followed == false) {
+                    document.querySelector('#follow').innerHTML = "Follow"
+                }
+                else if (followed == true) {
+                    document.querySelector('#follow').innerHTML = "Unfollow"
+                }
+            });
+        } 
+
+        function post_display(page) {
+            document.querySelector('#posts').innerHTML = '';
+            fetch('/posts', {
+                method: "POST",
+                body: JSON.stringify({
+                    page: page,
+                    poster: '{{ name }}'
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log(result);
+                if (result["error"] === "extends page id") {
+                    return false;
+                }
+                for (var i = 0; i < result.length; ++i) {
+                    document.querySelector('#posts').innerHTML += "<div style='height: 5px'></div>";
+                    let box = document.createElement('div');
+
+                    if (result[i].poster == "{{ user.username }}") {
+                        box.innerHTML = `
+                            <div><a href="/profile/${result[i].poster}" style="color: black;"><b>${result[i].poster}</b></a></div>
+                            <a href="/edit/${result[i].id}">edit</a>
+                            <div>${result[i].content}<div>
+                            <div style="font-weight: lighter">${result[i].timestamp}</div>
+                        `;
+                    }
+                    else {
+                        box.innerHTML = `
+                            <div><a href="/profile/${result[i].poster}" style="color: black;"><b>${result[i].poster}</b></a></div>
+                            <a href="/profile/${result[i].poster}">edit</a>
+                            <div>${result[i].content}<div>
+                            <div style="font-weight: lighter">${result[i].timestamp}</div>
+                        `;
+                    }
+                    box.style.cssText = "border: 1px solid; border-color: grey;padding: 5px; border-radius: 5px;";
+                    if (result[i].get_like === 'like') {
+                        box.innerHTML += `<a onclick="set_like(${result[i].id})" id ="post${result[i].id}">unlike</a>`
+                    }
+                    else {;
+                        box.innerHTML += `<a onclick="set_like(${result[i].id})" id ="post${result[i].id}">like</a>`
+                    }
+                    document.querySelector('#posts').append(box);
+                }
+            })
+            return true;
+        }
+
+        function set_like(id) {
+            let like = document.querySelector(`#post${id}`);
+            fetch('/like', {
+                method: "POST",
+                body: JSON.stringify({
+                    id: `${id}`,
+                    command: like.innerHTML
+                })
+            })
+            .then(response => response.json())
+            .then(a => {
+                console.log(a);
+                if (like.innerHTML === 'like') {
+                    like.innerHTML = 'unlike';
+                    like.cssText = "color: grey";
+                }
+                else {
+                    like.innerHTML = 'like';
+                    like.cssText = "color: red";
+                }
+                                
+            })
+            return false;
+        }
+        
+        function max_pagenum(poster) {
+            fetch('/maxpage', {
+                method: "POST",
+                body: JSON.stringify({
+                    poster: poster    
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                page_num = parseInt(result["page_num"]);
+            })
+        }
+    </script>
+{% endblock %}
+
+{% block body %}
+    <div style="height: 20%">
+        <div style="width: 50%;"><h2>{{ name }}</h2></div>
+        {% if user.is_authenticated and user.username != name %}
+            <div style="width: 10%;">
+                <button id="follow" class="btn btn-sm btn-outline-primary">
+                </button>
+            </div>
+        {% endif %}
+        <div id="follower_num"></div>
+        <div id="followed_num"></div>
+    </div>
+
+    <div id="posts">
+    </div>
+
+    <hr>
+
+    <div style="text-align: center;">
+        <button id="previous" class="btn btn-sm btn-outline-primary"><</button>
+        <input type="text" id="page_num" style="width: 50px;" class="btn btn-sm btn-outline-primary" disabled>
+        <button id="next" class="btn btn-sm btn-outline-primary">></button>
+    </div>
+{% endblock %}

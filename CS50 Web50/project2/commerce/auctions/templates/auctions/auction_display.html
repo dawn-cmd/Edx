@@ -1,0 +1,81 @@
+{% extends 'auctions/layout.html' %}
+
+{% block style %}
+    <style>
+        img {
+            height: 250px;
+            width: 400px;
+        }
+
+        #description {
+            font-size: 20px;
+        }
+
+        #comment {
+            font-size: 25px;
+        }
+
+        .make_comment {
+            width: 60%;
+            height: 20%;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <h1>Listing: {{ auction.title }}</h1>
+    <img src="{{ auction.cover_url|safe }}" alt="display">
+    <div id="description">
+        {{ auction.description }}
+    </div>
+    <div>
+        <h3>${{ auction.bid }}</h3>
+    </div>
+    <div>
+        {{ auction.bidder.username }}'s bid is the current bid. 
+    </div>
+    {% if auction.active == True %}
+        <form action="{% url 'auction_display' auction.id %}" method="POST">
+            {% csrf_token %}
+            {% if user == auction.provider %}
+                <input type="hidden" value="False" name="active">
+                <button type="submit">Close bid</button>
+            {% else %}
+                <input type="hidden" value="True" name="active">
+                <input type="number" name="bid" placeholder="A higher bid" min="{{ auction.bid }}">
+                <button type="submit">Bid</button>
+            {% endif %}
+        </form>
+    {% else %}
+        {% if user != auction.provider and user == auction.bidder %}
+            <div>
+                You won the auction.
+            </div>
+        {% endif %}
+    {% endif %}
+    <form action="{% url 'auction_display' auction.id %}" method="POST">
+        {{ csrf_token }}
+        {% if auction in watchlist %}
+            <input type="hidden" value="False" name="in_watchlist">
+            <button type="submit">Remove it from watchlist</button>
+        {% else %}
+            <input type="hidden" value="True" name="in_watchlist">
+            <button type="submit">Add it to watchlist</button>
+        {% endif %}
+    </form> 
+    <div>
+        <h2>Comments</h2>
+        <ul>
+            {% for comment in comments %}
+                <li class="comment">
+                    {{ comment.commenter }}: {{ comment.content }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <form action="{% url 'auction_display' auction.id %}" method="POST">
+        {% csrf_token %}
+        <input type="text" name="comment" maxlength="999999" size="100" width="400px" height="500px">
+        <button type="submit">Comment</button>
+    </form>
+{% endblock %}

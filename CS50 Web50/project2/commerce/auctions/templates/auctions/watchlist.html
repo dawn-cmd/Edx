@@ -1,0 +1,50 @@
+{% extends "auctions/layout.html" %}
+
+{% block style %}
+    <style>
+        .basebox {
+            height: 30%;
+            width: 80%;
+            border: 1px solid;
+        }
+
+        .img_std {
+            height: 250px;
+            width: 400px; 
+        }
+
+        .auction_link {
+            color: black;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <h2>Watchlist</h2>
+    {% for listing in watchlist %}
+        <a href="{% url 'auction_display' listing.id %}" class="auction_link">
+            <div class="basebox">
+                <table>
+                    <tr>
+                        <td>
+                            <img class="img_std" src="{{ listing.cover_url|safe}}" alt="{{ listing.title }}">
+                        </td>
+                        <td style="width: 20px;"></td>
+                        <td>
+                            <div>
+                                <h2>{{ listing.title }}</h2>
+                                <h4>Price: {{ listing.bid }} $</h4> 
+                                <div>
+                                    {{ listing.description }}
+                                </div>
+                                <div>
+                                        Provided by {{ listing.provider.username }}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </a>
+    {% endfor %}
+{% endblock %}

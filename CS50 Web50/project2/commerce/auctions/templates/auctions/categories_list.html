@@ -1,0 +1,25 @@
+{% extends 'auctions/layout.html' %}
+
+{% block style %}
+    <style>
+        .list {
+            border: 5px;
+        }
+
+        #list_item {
+            border: 5px;
+            font-size: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <h2>Categories</h2>
+    <ul id="list">
+        {% for category in categories %}
+            <a href="{% url 'category_display' category.id %}">
+                <li class="list_item">{{ category }}</li>
+            </a>
+        {% endfor %}
+    </ul>
+{% endblock %}

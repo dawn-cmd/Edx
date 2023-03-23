@@ -1,0 +1,27 @@
+{% extends "encyclopedia/layout.html" %}
+
+{% block title %}
+    Creat entry
+{% endblock %}
+
+{% block script %}
+    {% if messages %}
+        {% for msg in messages %}
+            alert('{{ msg.message }}');
+        {% endfor %}
+    {% endif %}
+{% endblock %}
+
+
+{% block body %}
+<h1>Create New Page</h1>
+<div>
+    <form action="{% url 'creat' %}" method="POST">
+        <div>
+            {% csrf_token %}
+            {{ form }}
+        </div>
+        <button type="submit">save</button>
+    </form>
+</div>
+{% endblock %}

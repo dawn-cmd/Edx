@@ -1,0 +1,126 @@
+{% extends 'network/layout.html' %}
+
+{% block script  %}
+    <script>
+        let followed = false;
+        let page_num = 0;
+        document.addEventListener('DOMContentLoaded', () => {
+            let page = 1;
+            document.querySelector('#page_num').value = page;
+            max_pagenum("following");
+            post_display(page);
+            document.querySelector('#previous').onclick = () => {
+                if (page > 1) {
+                    page -= 1;
+                    post_display(page)
+                    document.querySelector('#page_num').value = page;
+                }
+            }
+            document.querySelector('#next').onclick = () => {
+                if (page < page_num) {
+                    page += 1;
+                    post_display(page);
+                    document.querySelector('#page_num').value = page;
+                }
+            }
+        })
+
+        function post_display(page) {
+            document.querySelector('#posts').innerHTML = '';
+            fetch('/posts', {
+                method: "POST",
+                body: JSON.stringify({
+                    page: page,
+                    poster: 'following'
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log(result);
+                if (result["error"] === "extends page id") {
+                    return false;
+                }
+                for (var i = 0; i < result.length; ++i) {
+                    document.querySelector('#posts').innerHTML += "<div style='height: 5px'></div>";
+                    let box = document.createElement('div');
+
+                    if (result[i].poster == "{{ user.username }}") {
+                        box.innerHTML = `
+                            <div><a href="/profile/${result[i].poster}" style="color: black;"><b>${result[i].poster}</b></a></div>
+                            <a href="/edit/${result[i].id}">edit</a>
+                            <div>${result[i].content}<div>
+                            <div style="font-weight: lighter">${result[i].timestamp}</div>
+                        `;
+                    }
+                    else {
+                        box.innerHTML = `
+                            <div><a href="/profile/${result[i].poster}" style="color: black;"><b>${result[i].poster}</b></a></div>
+                            <a href="/profile/${result[i].poster}">edit</a>
+                            <div>${result[i].content}<div>
+                            <div style="font-weight: lighter">${result[i].timestamp}</div>
+                        `;
+                    }
+                    box.style.cssText = "border: 1px solid; border-color: grey;padding: 5px; border-radius: 5px;";
+                    if (result[i].get_like === 'like') {
+                        box.innerHTML += `<a onclick="set_like(${result[i].id})" id ="post${result[i].id}">unlike</a>`
+                    }
+                    else {;
+                        box.innerHTML += `<a onclick="set_like(${result[i].id})" id ="post${result[i].id}">like</a>`
+                    }
+                    document.querySelector('#posts').append(box);
+                }
+            })
+            return true;
+        }
+
+        function set_like(id) {
+            let like = document.querySelector(`#post${id}`);
+            fetch('/like', {
+                method: "POST",
+                body: JSON.stringify({
+                    id: `${id}`,
+                    command: like.innerHTML
+                })
+            })
+            .then(response => response.json())
+            .then(a => {
+                console.log(a);
+                if (like.innerHTML === 'like') {
+                    like.innerHTML = 'unlike';
+                    like.cssText = "color: grey";
+                }
+                else {
+                    like.innerHTML = 'like';
+                    like.cssText = "color: red";
+                }
+                                
+            })
+            return false;
+        }
+        
+        function max_pagenum(poster) {
+            fetch('/maxpage', {
+                method: "POST",
+                body: JSON.stringify({
+                    poster: poster    
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                page_num = parseInt(result["page_num"]);
+            })
+        }
+    </script>
+{% endblock %}
+
+{% block body %}
+    <h2>Following</h2>
+    <div id="posts">
+    </div>
+    <hr>
+    <div style="text-align: center;">
+        <button id="previous" class="btn btn-sm btn-outline-primary"><</button>
+        <input type="text" id="page_num" style="width: 50px;" class="btn btn-sm btn-outline-primary" disabled>
+        <button id="next" class="btn btn-sm btn-outline-primary">></button>
+    </div>
+{% endblock %}

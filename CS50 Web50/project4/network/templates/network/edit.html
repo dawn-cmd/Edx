@@ -1,0 +1,17 @@
+{% extends "network/layout.html" %}
+
+{% block script %}
+    <script>
+    </script>
+{% endblock %}
+
+{% block body %}
+    <h2>Content</h2>
+    <form action="{% url 'edit' id %}" method="POST">
+        {%csrf_token%}
+        <div>
+            <textarea name="content" style="width: 90%; height: 300px; border-radius: 5px;">{{ content }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-sm btn-outline-primary">Submit</button>
+    </form>
+{% endblock %}

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Calculator</title>
+        <script>
+
+            function setkey(s) {
+                if (s === 'plus') {
+                    s = '+';
+                }
+                if (s === 'minus') {
+                    s = '-';
+                }
+                if (s === 'mult') {
+                    s = '*';
+                }
+                if (s === 'div') {
+                    s = '/';
+                }
+                if (s === 'left') {
+                    s = '(';
+                }
+                if (s === 'right') {
+                    s = ')';
+                }
+                if (s === 'eq') {
+                    s = '=';
+                }
+                document.querySelector('#screen').value += s;
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
+                key = ['0','1', '2', '3', '4', '5', '6', '7', '8', '9', 'plus','minus', 'mult', 'div', 'left', 'right'];
+                for (let i = 0; i < 16; ++i) {
+                    document.querySelector(`#c${key[i]}`).onclick = () => {
+                        setkey(key[i]);
+                    }
+                }
+
+                document.querySelector('#cdel').onclick = () => {
+                    let str = document.querySelector('#screen').value;
+                    str = str.slice(0, str.length - 1);
+                    document.querySelector('#screen').value = str;
+                }
+
+                document.querySelector('#cclear').onclick = () => {
+                    document.querySelector('#screen').value = '';
+                }
+
+                document.querySelector('#ceq').onclick = () => {
+                    fetch('/cal', {
+                        method: "POST",
+                        body: JSON.stringify({
+                            s: document.querySelector('#screen').value 
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        console.log(result);
+                        if (result["error"] != undefined) {
+                            alert(result["error"]);
+                            return
+                        }
+                        document.querySelector('#screen').value = result["ans"];
+                    })
+                }
+
+                document.querySelector('#cans').onclick = () => {
+                    fetch('/get_ans', {
+                        method: "GET"
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        console.log(result);
+                        document.querySelector('#screen').value += result["ans"];
+                    })
+                }
+            })
+        </script>
+        <style>
+            button {
+                border-radius: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div style="text-align: center; width: 100%; height: 100%;">
+            <table style="
+                border: 1px solid; 
+                padding: 1px; 
+                border-radius: 10px;"
+            >
+                <tr>
+                    <td colspan="5"><input type="text" disabled id="screen" value=''></td>
+                </tr>
+                <tr>
+                    <td><button id="c1">1</button></td>
+                    <td><button id="c2">2</button></td>
+                    <td><button id="c3">3</button></td>
+                    <td><button id="cplus">+</button></td>
+                    <td><button id="cdel" style="width: 50px;">Del</button></td>
+                </tr>
+                <tr>
+                    <td><button id="c4">4</button></td>
+                    <td><button id="c5">5</button></td>
+                    <td><button id="c6">6</button></td>
+                    <td><button id="cminus">-</button></td>
+                    <td><button id="cclear" style="width: 50px;">Clear</button></td>
+                </tr>
+                <tr>
+                    <td><button id="c7">7</button></td>
+                    <td><button id="c8">8</button></td>
+                    <td><button id="c9">9</button></td>
+                    <td><button id="cmult">*</button></td>
+                    <td><button id="cans" style="width: 50px;">Ans</button></td>
+                </tr>
+                <tr>
+                    <td><button id="c0">0</button></td>
+                    <td><button id="cleft">(</button></td>
+                    <td><button id="cright">)</button></td>
+                    <td><button id="cdiv">/</button></td>
+                    <td><button id="ceq" style="width: 50px;">=</button></td>
+                </tr>
+            </table>
+        </div>
+    </body>
+</html>
